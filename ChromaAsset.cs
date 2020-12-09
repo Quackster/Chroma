@@ -53,6 +53,11 @@ namespace Chroma
 
                 XmlNodeList layers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/layers/layer");
 
+                if (layers == null || layers.Count == 0)
+                {
+                    layers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/directions/direction[@id='" + chromaFurniture.RenderDirection + "']/layer");
+                }
+
                 for (int i = 0; i < layers.Count; i++)
                 {
                     var layer = layers.Item(i);

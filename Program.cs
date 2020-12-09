@@ -16,8 +16,12 @@ namespace Chroma
         {
             //try
             {
-                //ProcessSWF("throne.swf");
-                ProcessSWF("prizetrophy6.swf");
+                ProcessSWF("tv_flat.swf");
+                //ProcessSWF("pura_mdl1.swf");
+                ProcessSWF("pura_mdl2.swf");
+                ProcessSWF("pura_mdl3.swf");
+                //ProcessSWF("pura_mdl4.swf");
+                //ProcessSWF("pura_mdl5.swf");
 
                 //ProcessSWF(@"C:\Users\Alex\Documents\gamedata-2020-18-2\hof_furni\chair_silo.swf");
             }

@@ -212,7 +212,7 @@ namespace Chroma
                 chromaAsset.Z = int.MinValue;
             } else
             {
-                chromaAsset.Z += (chromaAsset.Layer * 1000);
+                chromaAsset.Z += chromaAsset.Layer;
             }
         }
 
