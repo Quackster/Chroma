@@ -17,17 +17,7 @@ namespace Chroma
             //try
             {
                 //ProcessSWF("throne.swf");
-                ProcessSWF(@"chair_silo.swf");
-                ProcessSWF(@"tv_flat.swf");
-                ProcessSWF("computer_old.swf");
-                //ProcessSWF("kinkysofa.swf");
-                //ProcessSWF(@"C:\Users\Alex\Documents\gamedata-2020-18-2\hof_furni\christmas_sleigh.swf");
-                ProcessSWF("waasa_bunk_bed.swf");
-                //ProcessSWF(@"school_chairgold.swf");
-                //ProcessSWF(@"C:\Users\Alex\Documents\gamedata-2020-18-2\hof_furni\bardesk_polyfon.swf");
-                //ProcessSWF(@"C:\Users\Alex\Documents\gamedata-2020-18-2\hof_furni\lamp_armas.swf");
-                ProcessSWF("computer_laptop.swf");
-                ProcessSWF("rare_beehive_bulb.swf");
+                ProcessSWF("prizetrophy6.swf");
 
                 //ProcessSWF(@"C:\Users\Alex\Documents\gamedata-2020-18-2\hof_furni\chair_silo.swf");
             }
@@ -48,7 +38,7 @@ namespace Chroma
                 string webName = Path.GetFileName(fileName);
                 var webClient = new WebClient();
                 webClient.DownloadFile("http://cdn.classichabbo.com/r38/dcr/hof_furni/" + webName, webName);
-            } 
+            }
             ChromaFurniture furniture = null;
 
             furniture = new ChromaFurniture(fileName, "furniture_export", false, renderState: 0, renderDirection: 2, colourId: 3);

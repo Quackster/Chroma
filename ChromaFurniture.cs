@@ -21,13 +21,13 @@ namespace Chroma
         public int RenderDirection;
 
         public int ColourId;
-
+        public string Sprite;
+        
         public List<ChromaAsset> Assets;
+        public Image CANVAS;
 
         public int CANVAS_WIDTH = 500;
-        private Image CANVAS;
         public int CANVAS_HEIGHT = 500;
-
         public string CANVAS_PICTURE = null;//"bg.png";
 
         private static readonly string FFDEC_PATH = "C:\\Program Files (x86)\\FFDec\\ffdec.exe";
@@ -48,6 +48,7 @@ namespace Chroma
             this.RenderState = renderState;
             this.RenderDirection = renderDirection;
             this.ColourId = colourId;
+            this.Sprite = Path.GetFileNameWithoutExtension(fileName);
             //this.FrameSettings = new Dictionary<int, ChromaFrame>();
             //this.OverrideRenderState = overrideRenderState;
         }
@@ -166,6 +167,10 @@ namespace Chroma
                 if (imageName.Contains("_icon_"))
                     continue;
 
+                if (imageName.Contains(".props") || imageName.StartsWith("s_" + Sprite))
+                    continue;
+
+
                 //if (imageName.Contains("_sd_"))
                 //    continue;
 
@@ -184,6 +189,9 @@ namespace Chroma
 
         private void CreateAsset(ChromaAsset chromaAsset, XmlNode node)
         {
+            if (!chromaAsset.Parse())
+                return;
+
             if (Assets.Count(x => x.imageName == chromaAsset.imageName) == 0)
             {
                 chromaAsset.flipH = (node.Attributes.GetNamedItem("flipH") != null && node.Attributes.GetNamedItem("flipH").InnerText == "1");
