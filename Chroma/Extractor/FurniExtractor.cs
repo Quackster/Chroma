@@ -65,7 +65,7 @@ namespace Extractor
                 //Console.WriteLine(symbolClass.Names.IndexOf(symbol) + " / " + symbol + " / " + symbolClass.Ids[symbolClass.Names.IndexOf(symbol)]);
 
                 int symbolId = symbolClass.Ids[symbolClass.Names.IndexOf(symbol)];
-                
+
                 if (!symbolsImages.ContainsKey(symbolId))
                     continue;
 
@@ -81,7 +81,7 @@ namespace Extractor
             {
                 var asset = assets.Item(i);
 
-               if (asset.Attributes.GetNamedItem("source") == null)
+                if (asset.Attributes.GetNamedItem("source") == null)
                 {
                     continue;
                 }
