@@ -25,7 +25,7 @@ namespace Chroma
         public string BuildAssetName()
         {
             string letter = FileUtil.NumericLetter(AnimationLayer);
-            var builtString = chromaFurniture.FurnitureClass + "_" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "_" + letter + "_" + chromaFurniture.RenderDirection + "_" + RenderFrame;
+            var builtString = chromaFurniture.Sprite + "_" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "_" + letter + "_" + chromaFurniture.RenderDirection + "_" + RenderFrame;
             return builtString;
         }
 

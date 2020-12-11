@@ -1,4 +1,7 @@
-﻿using SixLabors.ImageSharp;
+﻿using Extractor;
+using Extractor.Json;
+using Newtonsoft.Json;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System;
@@ -7,14 +10,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using Color = SixLabors.ImageSharp.Color;
 
 namespace Chroma
 {
     public class ChromaFurniture
     {
+        public static string OUTPUT_FOLDER = "furni_compiled";
+
         private string fileName;
-        public string OutputDirectory;
-        public string FurnitureClass;
+        private string outputFileName;
         public bool IsSmallFurni;
 
         public int RenderState;
@@ -22,7 +27,6 @@ namespace Chroma
 
         public int ColourId;
         public string Sprite;
-        
         public List<ChromaAsset> Assets;
         public Image CANVAS;
 
@@ -30,7 +34,8 @@ namespace Chroma
         public int CANVAS_HEIGHT = 500;
         public string CANVAS_PICTURE = null;//"bg.png";
 
-        private static readonly string FFDEC_PATH = "C:\\Program Files (x86)\\FFDec\\ffdec.exe";
+        public string FurniData;
+        public JsonFurniData JsonData;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -38,31 +43,40 @@ namespace Chroma
         //public int OverrideRenderState;
         //private bool FoundAnimations;
 
-        public ChromaFurniture(string fileName, string outputDirectory, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1)
+        public string OutputDirectory
         {
-            this.fileName = fileName;
-            this.OutputDirectory = outputDirectory;
-            this.FurnitureClass = Path.GetFileNameWithoutExtension(fileName);
+            get { return Path.Combine("furni_export", Sprite); }
+        }
+
+        public string XmlDirectory
+        {
+            get { return Path.Combine("furni_export", Sprite, "xml"); }
+        }
+
+        public ChromaFurniture(string inputFileName, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1)
+        {
+            if (!Directory.Exists(OUTPUT_FOLDER))
+                Directory.CreateDirectory(OUTPUT_FOLDER);
+
+            this.fileName = inputFileName;
             this.IsSmallFurni = IsSmallFurni;
             this.Assets = new List<ChromaAsset>();
             this.RenderState = renderState;
             this.RenderDirection = renderDirection;
             this.ColourId = colourId;
-            this.Sprite = Path.GetFileNameWithoutExtension(fileName);
-            //this.FrameSettings = new Dictionary<int, ChromaFrame>();
-            //this.OverrideRenderState = overrideRenderState;
+            this.Sprite = Path.GetFileNameWithoutExtension(inputFileName);
+            this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
+            this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
         }
 
-        public void Run(string fileName = null)
+        public string Run()
         {
-            //LocateRenderSettings();
-            //LocateFrameSettings();
-            //LocateFrameCoordinates();
+            if (!File.Exists(this.FurniData))
+            {
+                FurniExtractor.Parse(this.fileName);
+            }
 
-            if (Directory.Exists(OutputDirectory))
-                Directory.Delete(OutputDirectory, true);
-
-            Directory.CreateDirectory(OutputDirectory);
+            JsonData = JsonConvert.DeserializeObject<JsonFurniData>(File.ReadAllText(this.FurniData));
 
             if (CANVAS_PICTURE != null)
             {
@@ -71,82 +85,22 @@ namespace Chroma
                 CANVAS_HEIGHT = CANVAS.Height;
                 CANVAS_WIDTH = CANVAS.Width;
             }
+;
 
-            var outputDirectory = new FileInfo(OutputDirectory).FullName;
-            ExtractAssets(FFDEC_PATH);
-
-            // Copy duplicate assets into their own pictures
-            var swfmillPath = Path.Combine(OutputDirectory, "swfmill.xml");
-            RunSwfmill(swfmillPath);
-            CopyDuplicateImages(swfmillPath);
 
             GenerateAssets();
             CreateBuildQueue();
-            BuildImage(fileName);
+
+            this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
+
+            BuildImage();
+
+            return this.outputFileName;
         }
 
-        private void CopyDuplicateImages(string swfmillPath)
+        private void GenerateAssets(bool createFiles = true)
         {
-            XmlDocument xmlDoc = new XmlDocument();
-            xmlDoc.Load(swfmillPath);
-
-            var nodes = xmlDoc.SelectNodes("//swf/Header/tags/SymbolClass/symbols/Symbol");
-
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                var symbol = nodes.Item(i);
-
-                if (symbol == null)
-                {
-                    continue;
-                }
-
-                string objectID = symbol.Attributes.GetNamedItem("objectID").InnerText;
-                string name = symbol.Attributes.GetNamedItem("name").InnerText;
-
-                foreach (var file in Directory.GetFiles(Path.Combine(OutputDirectory, "images"), "*"))
-                {
-                    var fileName = Path.GetFileName(file);
-
-                    if (fileName.StartsWith(objectID + "_"))
-                    {
-                        try
-                        {
-                            var newFile = name.Replace(Path.GetFileNameWithoutExtension(fileName) + "_", "") + ".png";
-                            File.Copy(file, Path.Combine(OutputDirectory, "images", newFile));
-                        }
-                        catch { }
-                    }
-                }
-            }
-        }
-
-        public void ExtractAssets(string ffdecPath)
-        {
-            var p = new Process();
-            p.StartInfo.FileName = ffdecPath;
-            p.StartInfo.Arguments = string.Format("-export \"binaryData,image\" \"{0}\" \"{1}\"", OutputDirectory, fileName);
-            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            p.StartInfo.CreateNoWindow = true;
-            p.Start();
-            p.WaitForExit();
-        }
-
-
-        private void RunSwfmill(string swfmillPath)
-        {
-            var p = new Process();
-            p.StartInfo.FileName = Path.Combine(Environment.CurrentDirectory, "swfmill\\swfmill.exe");
-            p.StartInfo.Arguments = "swf2xml \"" + fileName + "\" \"" + swfmillPath + "\"";
-            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            p.StartInfo.CreateNoWindow = true;
-            p.Start();
-            p.WaitForExit();
-        }
-
-        private void GenerateAssets()
-        {
-            var xmlData = FileUtil.SolveXmlFile(OutputDirectory, "assets");
+            var xmlData = FileUtil.SolveXmlFile(XmlDirectory, "assets");
 
             if (xmlData == null)
             {
@@ -167,7 +121,7 @@ namespace Chroma
                 if (imageName.Contains("_icon_"))
                     continue;
 
-                if (imageName.Contains(".props") || imageName.StartsWith("s_" + Sprite))
+                if (imageName.Contains(".props") || imageName.StartsWith("s_" + this.Sprite))
                     continue;
 
 
@@ -177,17 +131,17 @@ namespace Chroma
                 if (asset.Attributes.GetNamedItem("source") != null)
                 {
                     var newChromaAsset = new ChromaAsset(this, X, Y, asset.Attributes.GetNamedItem("source").InnerText, imageName);
-                    CreateAsset(newChromaAsset, asset);
+                    CreateAsset(newChromaAsset, asset, createFiles);
                 }
                 else
                 {
                     var chromaAsset = new ChromaAsset(this, X, Y, null, imageName);
-                    CreateAsset(chromaAsset, asset);
+                    CreateAsset(chromaAsset, asset, createFiles);
                 }
             }
         }
 
-        private void CreateAsset(ChromaAsset chromaAsset, XmlNode node)
+        private void CreateAsset(ChromaAsset chromaAsset, XmlNode node, bool createFiles)
         {
             if (!chromaAsset.Parse())
                 return;
@@ -197,7 +151,7 @@ namespace Chroma
                 chromaAsset.flipH = (node.Attributes.GetNamedItem("flipH") != null && node.Attributes.GetNamedItem("flipH").InnerText == "1");
                 Assets.Add(chromaAsset);
 
-                if (chromaAsset.sourceImage != null)
+                if (chromaAsset.sourceImage != null && createFiles)
                 {
                     chromaAsset.GenerateImage();
                 }
@@ -290,7 +244,7 @@ namespace Chroma
             return candidates;
         }
 
-        private void BuildImage(string fileName = null)
+        private void BuildImage()
         {
             var buildQueue = CreateBuildQueue();
 
@@ -299,11 +253,12 @@ namespace Chroma
 
             Rgba32[] cropColours = { Color.FromRgb(254,254,254) };// new Rgba32[] { Color.BlueViolet };//Color.FromRgb(142, 142, 90), Color.FromRgb(152, 152, 101) };//Color.Black;
 
-            var canvasColour = Color.FromRgb(254, 254, 254);
+            Color canvasColour = Color.FromRgb(254, 254, 254);
             var canvas = CANVAS != null ? CANVAS : new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, canvasColour);
 
             foreach (var asset in buildQueue)
             {
+                canvas.Save(this.outputFileName);
                 var image = Image.Load<Rgba32>(asset.GetImagePath());
 
                 if (asset.Alpha != -1)
@@ -343,22 +298,22 @@ namespace Chroma
 
             if (cropColours != null && cropColours.Length > 0)
             {
-                canvas.Save(GetFileName(fileName) + "-temp.png");
+                canvas.Save(this.outputFileName + "-temp.png");
 
                 // Crop the image
-                System.Drawing.Bitmap tempBitmap = new System.Drawing.Bitmap(GetFileName(fileName) + "-temp.png");
+                System.Drawing.Bitmap tempBitmap = new System.Drawing.Bitmap(this.outputFileName + "-temp.png");
                 System.Drawing.Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours);
 
 
-                croppedBitmap.Save(GetFileName(fileName) + ".png", System.Drawing.Imaging.ImageFormat.Png);
+                croppedBitmap.Save(this.outputFileName, System.Drawing.Imaging.ImageFormat.Png);
                 croppedBitmap.Dispose();
 
                 tempBitmap.Dispose();
-                File.Delete(GetFileName(fileName) + "-temp.png");
+                File.Delete(this.outputFileName + "-temp.png");
             }
             else
             {
-                canvas.Save(GetFileName(fileName) + ".png");
+                canvas.Save(this.outputFileName);
             }
 
             canvas.Dispose();
@@ -392,23 +347,16 @@ namespace Chroma
            return System.Drawing.ColorTranslator.FromHtml("#" + hexString);
         }
 
-        private string GetFileName(string fileName = null)
+        private string GetFileName()
         {
-            if (string.IsNullOrEmpty(fileName))
+            string name = (IsSmallFurni ? "s_" : "") + Sprite + "_" + RenderDirection + "_" + RenderState;
+
+            if (this.ColourId > -1 && this.Assets.Count(x => x.ColourCode != null) > 0)
             {
-                string name = (IsSmallFurni ? "s_" : "") + FurnitureClass + "_" + RenderDirection + "_" + RenderState;
-
-                if (this.ColourId > -1 && this.Assets.Count(x => x.ColourCode != null) > 0)
-                {
-                    name += "_colour" + this.ColourId;
-                }
-
-                return name;
-
-            } else
-            {
-                return fileName;
+                name += "_colour" + this.ColourId;
             }
+
+            return name;
         }
     }
 }

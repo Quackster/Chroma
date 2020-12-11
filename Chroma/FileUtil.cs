@@ -12,7 +12,7 @@ namespace Chroma
     {
         public static XmlDocument SolveXmlFile(string outputDirectory, string fileNameContains)
         {
-            foreach (var file in Directory.GetFiles(Path.Combine(outputDirectory, "binaryData"), "*"))
+            foreach (var file in Directory.GetFiles(outputDirectory, "*"))
             {
                 if (Path.GetFileNameWithoutExtension(file).Contains(fileNameContains))
                 {
@@ -43,7 +43,7 @@ namespace Chroma
 
         public static string SolveFile(string outputDirectory, string fileNameContains, bool endsWith = true)
         {
-            foreach (var file in Directory.GetFiles(Path.Combine(outputDirectory, "images"), "*"))
+            foreach (var file in Directory.GetFiles(Path.Combine(outputDirectory), "*"))
             {
                 if (endsWith)
                 {

@@ -1,0 +1,10 @@
+
+.vs/Chroma/v16/.suo
+*.lock
+*.ide
+*.ide-wal
+*.ide-shm
+*.exe
+bin/
+obj/
+packages/

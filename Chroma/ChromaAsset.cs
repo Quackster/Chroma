@@ -41,7 +41,7 @@ namespace Chroma
         {
             try
             {
-                string dataName = imageName.Replace(chromaFurniture.FurnitureClass + "_", "");
+                string dataName = imageName.Replace(chromaFurniture.Sprite + "_", "");
                 string[] data = dataName.Split('_');
 
                 IsSmall = (data[0] == "32");
@@ -49,7 +49,7 @@ namespace Chroma
                 Direction = int.Parse(data[2]);
                 Frame = int.Parse(data[3]);
 
-                var xmlData = FileUtil.SolveXmlFile(chromaFurniture.OutputDirectory, "visualization");
+                var xmlData = FileUtil.SolveXmlFile(chromaFurniture.XmlDirectory, "visualization");
 
                 XmlNodeList layers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/layers/layer");
 
@@ -98,7 +98,7 @@ namespace Chroma
                     }
                 }
             }
-            catch (FormatException ex)
+            catch (FormatException)
             {
                 return false;
             }
@@ -113,9 +113,10 @@ namespace Chroma
             if (file != null)
             {
                 var newName = imageName + ".png";
-                var newPath = Path.Combine(chromaFurniture.OutputDirectory, "images", newName);
+                var newPath = Path.Combine(chromaFurniture.OutputDirectory, newName);
 
-                File.Copy(file, newPath);
+                if (!File.Exists(newPath))
+                    File.Copy(file, newPath);
 
                 if (flipH)
                 {
