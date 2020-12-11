@@ -1,24 +1,13 @@
 ﻿using Chroma;
 using Flazzy;
-using Flazzy.ABC;
-using Flazzy.ABC.AVM2;
-using Flazzy.ABC.AVM2.Instructions;
-using Flazzy.IO;
 using Flazzy.Tags;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
 
 namespace Extractor
 {

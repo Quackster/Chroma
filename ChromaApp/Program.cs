@@ -1,5 +1,4 @@
 ﻿using Chroma;
-using Extractor;
 using System;
 
 namespace ChromaApp
