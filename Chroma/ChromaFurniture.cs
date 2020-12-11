@@ -6,14 +6,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using Chroma.Extensions;
+using System.Drawing;
 using Color = SixLabors.ImageSharp.Color;
 
 namespace Chroma
 {
     public class ChromaFurniture
     {
-        public static string OUTPUT_FOLDER = "furni_compiled";
-
         private string fileName;
         private string outputFileName;
         public bool IsSmallFurni;
@@ -24,7 +24,7 @@ namespace Chroma
         public int ColourId;
         public string Sprite;
         public List<ChromaAsset> Assets;
-        public Image CANVAS;
+        public Image<Rgba32> CANVAS;
 
         public int CANVAS_WIDTH = 500;
         public int CANVAS_HEIGHT = 500;
@@ -51,9 +51,6 @@ namespace Chroma
 
         public ChromaFurniture(string inputFileName, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1, bool RenderShadows = false)
         {
-            if (!Directory.Exists(OUTPUT_FOLDER))
-                Directory.CreateDirectory(OUTPUT_FOLDER);
-
             this.fileName = inputFileName;
             this.IsSmallFurni = IsSmallFurni;
             this.Assets = new List<ChromaAsset>();
@@ -61,7 +58,7 @@ namespace Chroma
             this.RenderDirection = renderDirection;
             this.ColourId = colourId;
             this.Sprite = Path.GetFileNameWithoutExtension(inputFileName);
-            this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
+            this.outputFileName = this.GetFileName();
             this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
             this.RenderShadows = RenderShadows;
         }
@@ -72,21 +69,16 @@ namespace Chroma
 
             if (CANVAS_PICTURE != null)
             {
-                CANVAS = Image.Load(CANVAS_PICTURE);//new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, colour);
+                CANVAS = SixLabors.ImageSharp.Image.Load<Rgba32>(CANVAS_PICTURE);//new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, colour);
 
                 CANVAS_HEIGHT = CANVAS.Height;
                 CANVAS_WIDTH = CANVAS.Width;
             }
 ;
-
-
             GenerateAssets();
+            CreateBuildQueue();
 
-            var buildQueue = CreateBuildQueue();
-            this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
-
-            BuildImage();
-
+            this.outputFileName = this.GetFileName();
             return this.outputFileName;
         }
 
@@ -232,77 +224,82 @@ namespace Chroma
             return candidates;
         }
 
-        private void BuildImage()
+        public byte[] CreateImage()
         {
             var buildQueue = CreateBuildQueue();
 
             if (buildQueue == null)
-                return;
+                return null;
 
-            Rgba32[] cropColours = { Color.FromRgb(254,254,254) };// new Rgba32[] { Color.BlueViolet };//Color.FromRgb(142, 142, 90), Color.FromRgb(152, 152, 101) };//Color.Black;
-
+            Rgba32[] cropColours = { Color.FromRgb(254, 254, 254) };// new Rgba32[] { Color.BlueViolet };//Color.FromRgb(142, 142, 90), Color.FromRgb(152, 152, 101) };//Color.Black;
             Color canvasColour = Color.FromRgb(254, 254, 254);
-            var canvas = CANVAS != null ? CANVAS : new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, canvasColour);
 
-            foreach (var asset in buildQueue)
+            using (var canvas = CANVAS != null ? CANVAS : new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, canvasColour))
             {
-                canvas.Save(this.outputFileName);
-                var image = Image.Load<Rgba32>(asset.GetImagePath());
-
-                if (asset.Alpha != -1)
+                foreach (var asset in buildQueue)
                 {
-                    TintImage(image, "FFFFFF", (byte)asset.Alpha);
-                }
+                    var image = SixLabors.ImageSharp.Image.Load<Rgba32>(asset.GetImagePath());
 
-                if (asset.ColourCode != null)
-                {
-                    TintImage(image, asset.ColourCode, 255);
-                }
-
-                if (asset.Shadow)
-                {
-                    image.Mutate(ctx =>
+                    if (asset.Alpha != -1)
                     {
-                        ctx.Opacity(0.2f);
+                        TintImage(image, "FFFFFF", (byte)asset.Alpha);
+                    }
+
+                    if (asset.ColourCode != null)
+                    {
+                        TintImage(image, asset.ColourCode, 255);
+                    }
+
+                    if (asset.Shadow)
+                    {
+                        image.Mutate(ctx =>
+                        {
+                            ctx.Opacity(0.2f);
+                        });
+                    }
+
+                    var graphicsOptions = new GraphicsOptions();
+
+                    if ((asset.Ink == "ADD" || asset.Ink == "33"))
+                    {
+                        graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Add;
+                    }
+                    else
+                    {
+                        graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Normal;
+                    }
+
+                    canvas.Mutate(ctx =>
+                    {
+                        ctx.DrawImage(image, new SixLabors.ImageSharp.Point(canvas.Width - asset.ImageX, canvas.Height - asset.ImageY), graphicsOptions);
                     });
                 }
 
-                var graphicsOptions = new GraphicsOptions();
 
-                if ((asset.Ink == "ADD" || asset.Ink == "33"))
+                using (Bitmap tempBitmap = canvas.ToBitmap())
                 {
-                    graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Add;
+                    if (cropColours != null && cropColours.Length > 0)
+                    {
+                        var temp = canvas.ToBitmap();
+
+                        // Crop the image
+                        using (Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours))
+                        {
+                            return RenderImage(croppedBitmap);
+                        }
+
+                    }
+                    else
+                    {
+                        return RenderImage(tempBitmap);
+                    }
                 }
-                else
-                {
-                    graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Normal;
-                }
-
-                canvas.Mutate(ctx =>
-                {
-                    ctx.DrawImage(image, new Point(canvas.Width - asset.ImageX, canvas.Height - asset.ImageY), graphicsOptions);
-                });
             }
+        }
 
-            if (cropColours != null && cropColours.Length > 0)
-            {
-                canvas.Save(this.outputFileName + "-temp.png");
-
-                // Crop the image
-                System.Drawing.Bitmap tempBitmap = new System.Drawing.Bitmap(this.outputFileName + "-temp.png");
-                System.Drawing.Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours);
-                croppedBitmap.Save(this.outputFileName, System.Drawing.Imaging.ImageFormat.Png);
-                croppedBitmap.Dispose();
-
-                tempBitmap.Dispose();
-                File.Delete(this.outputFileName + "-temp.png");
-            }
-            else
-            {
-                canvas.Save(this.outputFileName);
-            }
-
-            canvas.Dispose();
+        private byte[] RenderImage(Bitmap croppedBitmap)
+        {
+            return croppedBitmap.ToByteArray();
         }
 
         private void TintImage(Image<Rgba32> image, string colourCode, byte alpha)
@@ -342,7 +339,7 @@ namespace Chroma
                 name += "_colour" + this.ColourId;
             }
 
-            return name;
+            return name + ".png";
         }
     }
 }
