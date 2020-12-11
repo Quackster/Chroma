@@ -10,12 +10,15 @@ namespace ChromaApp
         {
             ChromaFurniture furni;
 
-            furni = new ChromaFurniture(@"C:\Users\Alex\Documents\GitHub\Havana\tools\www\r38\dcr\hof_furni\tv_flat.swf", false, 0, 2, 2);
+            furni = new ChromaFurniture(@"C:\Users\Alex\Documents\GitHub\Havana\tools\www\r38\dcr\hof_furni\tv_flat.swf", isSmallFurni: false, renderState: 0, renderDirection: 2);
+            furni.Run();
 
-            string fileName = furni.Run();
-            byte[] buffer = furni.CreateImage();
+            File.WriteAllBytes(furni.GetFileName(), furni.CreateImage());
 
-            File.WriteAllBytes(fileName, buffer);
+            furni = new ChromaFurniture(@"C:\Users\Alex\Documents\GitHub\Havana\tools\www\r38\dcr\hof_furni\chair_silo.swf", isSmallFurni: false, renderState: 0, renderDirection: 2, colourId: 2);
+            furni.Run();
+
+            File.WriteAllBytes(furni.GetFileName(), furni.CreateImage());
 
             Console.WriteLine("Finished conversion");
             Console.Read();

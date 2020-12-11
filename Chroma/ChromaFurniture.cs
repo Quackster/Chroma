@@ -49,10 +49,10 @@ namespace Chroma
             get { return Path.Combine("furni_export", Sprite, "xml"); }
         }
 
-        public ChromaFurniture(string inputFileName, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1, bool RenderShadows = false)
+        public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false)
         {
             this.fileName = inputFileName;
-            this.IsSmallFurni = IsSmallFurni;
+            this.IsSmallFurni = isSmallFurni;
             this.Assets = new List<ChromaAsset>();
             this.RenderState = renderState;
             this.RenderDirection = renderDirection;
@@ -60,7 +60,7 @@ namespace Chroma
             this.Sprite = Path.GetFileNameWithoutExtension(inputFileName);
             this.outputFileName = this.GetFileName();
             this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
-            this.RenderShadows = RenderShadows;
+            this.RenderShadows = renderShadows;
         }
 
         public string Run()
@@ -335,7 +335,7 @@ namespace Chroma
            return System.Drawing.ColorTranslator.FromHtml("#" + hexString);
         }
 
-        private string GetFileName()
+        public string GetFileName()
         {
             string name = (IsSmallFurni ? "s_" : "") + Sprite + "_" + RenderDirection + "_" + RenderState;
 
