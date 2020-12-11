@@ -35,7 +35,7 @@ namespace Chroma
         public string CANVAS_PICTURE = null;//"bg.png";
 
         public string FurniData;
-        public JsonFurniData JsonData;
+        private bool RenderShadows;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -53,7 +53,7 @@ namespace Chroma
             get { return Path.Combine("furni_export", Sprite, "xml"); }
         }
 
-        public ChromaFurniture(string inputFileName, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1)
+        public ChromaFurniture(string inputFileName, bool IsSmallFurni, int renderState, int renderDirection, int colourId = -1, bool RenderShadows = false)
         {
             if (!Directory.Exists(OUTPUT_FOLDER))
                 Directory.CreateDirectory(OUTPUT_FOLDER);
@@ -67,16 +67,12 @@ namespace Chroma
             this.Sprite = Path.GetFileNameWithoutExtension(inputFileName);
             this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
             this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
+            this.RenderShadows = RenderShadows;
         }
 
         public string Run()
         {
-            if (!File.Exists(this.FurniData))
-            {
-                FurniExtractor.Parse(this.fileName);
-            }
-
-            JsonData = JsonConvert.DeserializeObject<JsonFurniData>(File.ReadAllText(this.FurniData));
+            FurniExtractor.Parse(this.fileName);
 
             if (CANVAS_PICTURE != null)
             {
@@ -89,8 +85,8 @@ namespace Chroma
 
 
             GenerateAssets();
-            CreateBuildQueue();
 
+            var buildQueue = CreateBuildQueue();
             this.outputFileName = Path.Combine(OUTPUT_FOLDER, this.GetFileName() + ".png");
 
             BuildImage();
@@ -124,10 +120,6 @@ namespace Chroma
                 if (imageName.Contains(".props") || imageName.StartsWith("s_" + this.Sprite))
                     continue;
 
-
-                //if (imageName.Contains("_sd_"))
-                //    continue;
-
                 if (asset.Attributes.GetNamedItem("source") != null)
                 {
                     var newChromaAsset = new ChromaAsset(this, X, Y, asset.Attributes.GetNamedItem("source").InnerText, imageName);
@@ -150,11 +142,6 @@ namespace Chroma
             {
                 chromaAsset.flipH = (node.Attributes.GetNamedItem("flipH") != null && node.Attributes.GetNamedItem("flipH").InnerText == "1");
                 Assets.Add(chromaAsset);
-
-                if (chromaAsset.sourceImage != null && createFiles)
-                {
-                    chromaAsset.GenerateImage();
-                }
 
                 chromaAsset.ImageX = chromaAsset.ImageX + (CANVAS_WIDTH / 2);// 32;
                 chromaAsset.ImageY = chromaAsset.ImageY + (CANVAS_HEIGHT / 2);// 25;
@@ -240,6 +227,11 @@ namespace Chroma
                 }
             }
 
+            if (!this.RenderShadows)
+            {
+                //candidates = candidates.Where(x => !x.Shadow).ToList();
+            }
+
             candidates = candidates.OrderBy(x => x.Z).ToList();
             return candidates;
         }
@@ -275,7 +267,7 @@ namespace Chroma
                 {
                     image.Mutate(ctx =>
                     {
-                        ctx.Opacity(0.1f);
+                        ctx.Opacity(0.2f);
                     });
                 }
 
@@ -303,8 +295,6 @@ namespace Chroma
                 // Crop the image
                 System.Drawing.Bitmap tempBitmap = new System.Drawing.Bitmap(this.outputFileName + "-temp.png");
                 System.Drawing.Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours);
-
-
                 croppedBitmap.Save(this.outputFileName, System.Drawing.Imaging.ImageFormat.Png);
                 croppedBitmap.Dispose();
 

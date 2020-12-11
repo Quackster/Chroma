@@ -115,19 +115,17 @@ namespace Chroma
                 var newName = imageName + ".png";
                 var newPath = Path.Combine(chromaFurniture.OutputDirectory, newName);
 
-                if (!File.Exists(newPath))
-                    File.Copy(file, newPath);
-
-                if (flipH)
+                if (File.Exists(newPath))
                 {
-                    var bitmap1 = (Bitmap)Bitmap.FromFile(newPath);
+                    if (flipH)
+                    {
+                        var bitmap1 = (Bitmap)Bitmap.FromFile(newPath);
 
-                    RelativeX = bitmap1.Width - RelativeX;
-                    ImageX = RelativeX;
+                        RelativeX = bitmap1.Width - RelativeX;
+                        ImageX = RelativeX;
 
-                    bitmap1.RotateFlip(RotateFlipType.Rotate180FlipY);
-                    bitmap1.Save(newPath);
-                    bitmap1.Dispose();
+                        bitmap1.Dispose();
+                    }
                 }
             }
         }
