@@ -106,6 +106,31 @@ namespace Chroma
             return true;
         }
 
+        public void GenerateImage()
+        {
+            var file = FileUtil.SolveFile(chromaFurniture.OutputDirectory, sourceImage);
+
+            if (file != null)
+            {
+                var newName = imageName + ".png";
+                var newPath = Path.Combine(chromaFurniture.OutputDirectory, newName);
+
+                if (File.Exists(newPath))
+                {
+                    if (flipH)
+                    {
+                        var bitmap1 = (Bitmap)Bitmap.FromFile(newPath);
+
+                        RelativeX = bitmap1.Width - RelativeX;
+                        ImageX = RelativeX;
+
+                        bitmap1.RotateFlip(RotateFlipType.Rotate180FlipY);
+                        bitmap1.Dispose();
+                    }
+                }
+            }
+        }
+
         public string GetImagePath()
         {
             return FileUtil.SolveFile(chromaFurniture.OutputDirectory, imageName);

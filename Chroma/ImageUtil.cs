@@ -223,5 +223,30 @@ namespace Chroma
 
             return false;
         }
+
+        public static System.Drawing.Bitmap ToBitmap<TPixel>(Image<TPixel> image) where TPixel : unmanaged, IPixel<TPixel>
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                var imageEncoder = image.GetConfiguration().ImageFormatsManager.FindEncoder(PngFormat.Instance);
+                image.Save(memoryStream, imageEncoder);
+
+                memoryStream.Seek(0, SeekOrigin.Begin);
+
+                return new System.Drawing.Bitmap(memoryStream);
+            }
+        }
+
+        public static Image<TPixel> ToImageSharpImage<TPixel>(System.Drawing.Bitmap bitmap) where TPixel : unmanaged, IPixel<TPixel>
+        {
+            using (var memoryStream = new MemoryStream())
+            {
+                bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
+
+                memoryStream.Seek(0, SeekOrigin.Begin);
+
+                return SixLabors.ImageSharp.Image.Load<TPixel>(memoryStream);
+            }
+        }
     }
 }
