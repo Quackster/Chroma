@@ -2,6 +2,7 @@
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -251,42 +252,47 @@ namespace Chroma
 
             foreach (var asset in buildQueue)
             {
-                canvas.Save(this.outputFileName);
-                var image = Image.Load<Rgba32>(asset.GetImagePath());
-
-                if (asset.Alpha != -1)
+                try
                 {
-                    TintImage(image, "FFFFFF", (byte)asset.Alpha);
-                }
+                    var image = Image.Load<Rgba32>(asset.GetImagePath());
 
-                if (asset.ColourCode != null)
-                {
-                    TintImage(image, asset.ColourCode, 255);
-                }
-
-                if (asset.Shadow)
-                {
-                    image.Mutate(ctx =>
+                    if (asset.Alpha != -1)
                     {
-                        ctx.Opacity(0.2f);
+                        TintImage(image, "FFFFFF", (byte)asset.Alpha);
+                    }
+
+                    if (asset.ColourCode != null)
+                    {
+                        TintImage(image, asset.ColourCode, 255);
+                    }
+
+                    if (asset.Shadow)
+                    {
+                        image.Mutate(ctx =>
+                        {
+                            ctx.Opacity(0.2f);
+                        });
+                    }
+
+                    var graphicsOptions = new GraphicsOptions();
+
+                    if ((asset.Ink == "ADD" || asset.Ink == "33"))
+                    {
+                        graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Add;
+                    }
+                    else
+                    {
+                        graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Normal;
+                    }
+
+                    canvas.Mutate(ctx =>
+                    {
+                        ctx.DrawImage(image, new Point(canvas.Width - asset.ImageX, canvas.Height - asset.ImageY), graphicsOptions);
                     });
                 }
-
-                var graphicsOptions = new GraphicsOptions();
-
-                if ((asset.Ink == "ADD" || asset.Ink == "33"))
+                catch (Exception ex)
                 {
-                    graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Add;
                 }
-                else
-                {
-                    graphicsOptions.ColorBlendingMode = PixelColorBlendingMode.Normal;
-                }
-
-                canvas.Mutate(ctx =>
-                {
-                    ctx.DrawImage(image, new Point(canvas.Width - asset.ImageX, canvas.Height - asset.ImageY), graphicsOptions);
-                });
             }
 
             if (cropColours != null && cropColours.Length > 0)

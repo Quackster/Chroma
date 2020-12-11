@@ -57,35 +57,7 @@ namespace Extractor
                 var name = symbolClass.Names[symbolClass.Ids.IndexOf(image.Id)];
                 var xmlName = name.Substring(fileName.Length + 1);
 
-                if (!File.Exists(@"furni_export/" + fileName + "/" + xmlName + ".png"))
-                {
-                    System.Drawing.Color[,] table = image.GetARGBMap();
-
-                    int width = table.GetLength(0);
-                    int height = table.GetLength(1);
-                    using (var payload = new Image<Rgba32>(width, height))
-                    {
-                        for (int y = 0; y < height; y++)
-                        {
-                            for (int x = 0; x < width; x++)
-                            {
-                                System.Drawing.Color pixel = table[x, y];
-                                payload[x, y] = new Rgba32(pixel.R, pixel.G, pixel.B, pixel.A);
-                            }
-                        }
-
-                        /*if (asset.Attributes.GetNamedItem("flipH") != null &&
-                            asset.Attributes.GetNamedItem("flipH").InnerText == "1")
-                        {
-                            payload.Mutate(ctx => ctx.Flip(FlipMode.Vertical));
-                        }*/
-
-                        using (var output = new StreamWriter(@"furni_export/" + fileName + "/" + xmlName + ".png"))
-                        {
-                            payload.SaveAsPng(output.BaseStream);
-                        }
-                    }
-                }
+                WriteImage(image, @"furni_export/" + fileName + "/" + xmlName + ".png");
             }
 
             for (int i = 0; i < assets.Count; i++)
@@ -124,6 +96,30 @@ namespace Extractor
             }
 
              return true;
+        }
+
+        private static void WriteImage(DefineBitsLossless2Tag image, string path)
+        {
+            System.Drawing.Color[,] table = image.GetARGBMap();
+
+            int width = table.GetLength(0);
+            int height = table.GetLength(1);
+            using (var payload = new Image<Rgba32>(width, height))
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        System.Drawing.Color pixel = table[x, y];
+                        payload[x, y] = new Rgba32(pixel.R, pixel.G, pixel.B, pixel.A);
+                    }
+                }
+
+                using (var output = new StreamWriter(path))
+                {
+                    payload.SaveAsPng(output.BaseStream);
+                }
+            }
         }
     }
 }
