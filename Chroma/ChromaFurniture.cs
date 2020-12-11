@@ -140,7 +140,7 @@ namespace Chroma
                 chromaAsset.flipH = (node.Attributes.GetNamedItem("flipH") != null && node.Attributes.GetNamedItem("flipH").InnerText == "1");
                 Assets.Add(chromaAsset);
 
-                                if (chromaAsset.sourceImage != null && createFiles)
+                if (chromaAsset.sourceImage != null && createFiles)
                 {
                     chromaAsset.GenerateImage();
                 }

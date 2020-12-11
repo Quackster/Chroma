@@ -3,6 +3,7 @@ using Flazzy;
 using Flazzy.Tags;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -27,6 +28,9 @@ namespace Extractor
             if (!Directory.Exists(@"furni_export/" + fileName))
                 Directory.CreateDirectory(@"furni_export/" + fileName);
 
+            if (!Directory.Exists(@"furni_export/" + fileName + "/xml"))
+                Directory.CreateDirectory(@"furni_export/" + fileName + "/xml");
+
             var symbolClass = flash.Tags.Where(t => t.Kind == TagKind.SymbolClass).Cast<SymbolClassTag>().First();
             var imageTags = flash.Tags.Where(t => t.Kind == TagKind.DefineBitsLossless2).Cast<DefineBitsLossless2Tag>();
             var dataTags = flash.Tags.Where(t => t.Kind == TagKind.DefineBinaryData).Cast<DefineBinaryDataTag>();
@@ -42,9 +46,6 @@ namespace Extractor
                 var type = name.Split('_')[name.Split('_').Length - 1];
                 var txt = Encoding.Default.GetString(data.Data);
 
-                if (!Directory.Exists(@"furni_export/" + fileName + "/xml"))
-                    Directory.CreateDirectory(@"furni_export/" + fileName + "/xml");
-
                 if (!File.Exists(@"furni_export/" + fileName + "/xml/" + type + ".xml"))
                     File.WriteAllText(@"furni_export/" + fileName + "/xml/" + type + ".xml", txt);
             }
@@ -52,9 +53,25 @@ namespace Extractor
             var assetDocument = FileUtil.SolveXmlFile(@"furni_export/" + fileName + "/xml", "assets");
             var assets = assetDocument.SelectNodes("//assets/asset");
 
+            var symbolsImages = new Dictionary<int, DefineBitsLossless2Tag>();
+
             foreach (var image in imageTags)
             {
-                var name = symbolClass.Names[symbolClass.Ids.IndexOf(image.Id)];
+                symbolsImages[image.Id] = image;
+            }
+
+            foreach (var symbol in symbolClass.Names)
+            {
+                //Console.WriteLine(symbolClass.Names.IndexOf(symbol) + " / " + symbol + " / " + symbolClass.Ids[symbolClass.Names.IndexOf(symbol)]);
+
+                int symbolId = symbolClass.Ids[symbolClass.Names.IndexOf(symbol)];
+                
+                if (!symbolsImages.ContainsKey(symbolId))
+                    continue;
+
+                string name = symbol;
+
+                var image = symbolsImages[symbolId];
                 var xmlName = name.Substring(fileName.Length + 1);
 
                 WriteImage(image, @"furni_export/" + fileName + "/" + xmlName + ".png");
@@ -64,7 +81,7 @@ namespace Extractor
             {
                 var asset = assets.Item(i);
 
-                if (asset.Attributes.GetNamedItem("source") == null)
+               if (asset.Attributes.GetNamedItem("source") == null)
                 {
                     continue;
                 }
@@ -74,11 +91,11 @@ namespace Extractor
 
                 var assetImage = FileUtil.SolveFile(@"furni_export/" + fileName, source);
 
+                var newName = image + ".png";
+                var newPath = Path.Combine(@"furni_export", fileName, newName);
+
                 if (assetImage != null)
                 {
-                    var newName = image + ".png";
-                    var newPath = Path.Combine(@"furni_export", fileName, newName);
-
                     if (!File.Exists(newPath))
                     {
                         File.Copy(assetImage, newPath);
@@ -95,7 +112,7 @@ namespace Extractor
                 }
             }
 
-             return true;
+            return true;
         }
 
         private static void WriteImage(DefineBitsLossless2Tag image, string path)

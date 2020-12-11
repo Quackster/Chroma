@@ -124,7 +124,6 @@ namespace Chroma
                         RelativeX = bitmap1.Width - RelativeX;
                         ImageX = RelativeX;
 
-                        bitmap1.RotateFlip(RotateFlipType.Rotate180FlipY);
                         bitmap1.Dispose();
                     }
                 }
