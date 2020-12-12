@@ -24,14 +24,18 @@ namespace Chroma
         public int ColourId;
         public string Sprite;
         public List<ChromaAsset> Assets;
-        public Image<Rgba32> CANVAS;
+        public Image<Rgba32> DrawingCanvas;
 
         public int CANVAS_WIDTH = 500;
         public int CANVAS_HEIGHT = 500;
-        public string CANVAS_PICTURE = null;//"bg.png";
+        public string CANVAS_PICTURE = "bg.png";
 
         public string FurniData;
+
         private bool RenderShadows;
+        private bool RenderBackground;
+        private string RenderCanvasColour;
+        private bool CropImage;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -49,7 +53,8 @@ namespace Chroma
             get { return Path.Combine("furni_export", Sprite, "xml"); }
         }
 
-        public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false)
+        public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false, bool renderBackground = false, string renderCanvasColour = null,
+            bool cropImage = true)
         {
             this.fileName = inputFileName;
             this.IsSmallFurni = isSmallFurni;
@@ -61,18 +66,25 @@ namespace Chroma
             this.outputFileName = this.GetFileName();
             this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
             this.RenderShadows = renderShadows;
+            this.RenderBackground = renderBackground;
+            this.RenderCanvasColour = renderCanvasColour;
+            this.CropImage = cropImage;
         }
 
         public string Run()
         {
             FurniExtractor.Parse(this.fileName);
 
-            if (CANVAS_PICTURE != null)
+            if (this.RenderBackground)
             {
-                CANVAS = SixLabors.ImageSharp.Image.Load<Rgba32>(CANVAS_PICTURE);//new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, colour);
+                DrawingCanvas = SixLabors.ImageSharp.Image.Load<Rgba32>(CANVAS_PICTURE);//new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, colour);
 
-                CANVAS_HEIGHT = CANVAS.Height;
-                CANVAS_WIDTH = CANVAS.Width;
+                CANVAS_HEIGHT = DrawingCanvas.Height;
+                CANVAS_WIDTH = DrawingCanvas.Width;
+            }
+            else
+            {
+                DrawingCanvas = new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, HexToColor(this.RenderCanvasColour));
             }
 ;
             GenerateAssets();
@@ -222,7 +234,7 @@ namespace Chroma
 
             if (!this.RenderShadows)
             {
-                //candidates = candidates.Where(x => !x.Shadow).ToList();
+                candidates = candidates.Where(x => !x.Shadow).ToList();
             }
 
             candidates = candidates.OrderBy(x => x.Z).ToList();
@@ -236,10 +248,22 @@ namespace Chroma
             if (buildQueue == null)
                 return null;
 
-            Rgba32[] cropColours = { Color.FromRgb(254, 254, 254) };// new Rgba32[] { Color.BlueViolet };//Color.FromRgb(142, 142, 90), Color.FromRgb(152, 152, 101) };//Color.Black;
-            Color canvasColour = Color.FromRgb(254, 254, 254);
+            var cropColours = new List<Rgba32>();
 
-            using (var canvas = CANVAS != null ? CANVAS : new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, canvasColour))
+            if (this.CropImage) 
+            {
+                if (this.RenderBackground)
+                {
+                    cropColours.Add(Color.FromRgb(142, 142, 94));
+                    cropColours.Add(Color.FromRgb(152, 152, 101));
+                }
+                else
+                {
+                    cropColours.Add(HexToColor(this.RenderCanvasColour));
+                }
+            }
+
+            using (var canvas = this.DrawingCanvas)
             {
                 foreach (var asset in buildQueue)
                 {
@@ -283,12 +307,12 @@ namespace Chroma
 
                 using (Bitmap tempBitmap = canvas.ToBitmap())
                 {
-                    if (cropColours != null && cropColours.Length > 0)
+                    if (CropImage && cropColours.Count > 0)
                     {
                         var temp = canvas.ToBitmap();
 
                         // Crop the image
-                        using (Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours))
+                        using (Bitmap croppedBitmap = ImageUtil.TrimBitmap(tempBitmap, cropColours.ToArray()))
                         {
                             return RenderImage(croppedBitmap);
                         }
@@ -330,9 +354,10 @@ namespace Chroma
             }
         }
 
-        public static System.Drawing.Color HexToColor(string hexString)
+        public static Rgba32 HexToColor(string hexString)
         {
-           return System.Drawing.ColorTranslator.FromHtml("#" + hexString);
+            var drawingColor = System.Drawing.ColorTranslator.FromHtml("#" + hexString);
+            return Color.FromRgb(drawingColor.R, drawingColor.G, drawingColor.B);
         }
 
         public string GetFileName()

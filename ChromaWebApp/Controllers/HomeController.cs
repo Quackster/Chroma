@@ -21,6 +21,10 @@ namespace ChromaWebApp.Controllers
             int renderDirection = 0;
             int color = 0;
             string sprite = null;
+            bool renderBackground = false;
+            bool renderShadows = false;
+            bool cropImage = true;
+            string renderCanvasColour = "FEFEFE";
 
             if (Request.Query.ContainsKey("sprite"))
             {
@@ -98,9 +102,37 @@ namespace ChromaWebApp.Controllers
                 }
             }
 
+            if (Request.Query.ContainsKey("bg"))
+            {
+                Request.Query.TryGetValue("bg", out var value);
+                renderBackground = !(value.ToString().Equals("0") || value.ToString().Equals("false"));
+            }
+
+            if (Request.Query.ContainsKey("crop"))
+            {
+                Request.Query.TryGetValue("crop", out var value);
+                cropImage = (value.ToString().Equals("1") || value.ToString().Equals("true"));
+            }
+
+            if (Request.Query.ContainsKey("shadow"))
+            {
+                Request.Query.TryGetValue("bg", out var value);
+                renderShadows = (value.ToString().Equals("1") || value.ToString().Equals("true"));
+            }
+
+            if (Request.Query.ContainsKey("canvas"))
+            {
+                Request.Query.TryGetValue("canvas", out var value);
+                renderCanvasColour = value.ToString();
+            }
+
             if (sprite != null && sprite.Length > 0)
             {
-                var furni = new ChromaFurniture("swfs/hof_furni/" + sprite + ".swf", isSmallFurni: isSmallFurni, renderState: renderState, renderDirection: renderDirection, colourId: color);
+                var furni = new ChromaFurniture("swfs/hof_furni/" + sprite + ".swf", 
+                                isSmallFurni: isSmallFurni, renderState: renderState, 
+                                renderDirection: renderDirection, colourId: color,
+                                renderShadows: renderShadows, renderBackground: renderBackground,
+                                renderCanvasColour: renderCanvasColour, cropImage: cropImage);
                 furni.Run();
 
                 return File(furni.CreateImage(), "image/png");

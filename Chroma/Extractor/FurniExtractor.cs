@@ -117,6 +117,9 @@ namespace Extractor
 
         private static void WriteImage(DefineBitsLossless2Tag image, string path)
         {
+            if (File.Exists(path))
+                return;
+
             System.Drawing.Color[,] table = image.GetARGBMap();
 
             int width = table.GetLength(0);
