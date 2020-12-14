@@ -4,6 +4,8 @@ Chroma (Greek word χρώμα for paint) a furniture renderer for the Habbo SWF'
 ## A massive thanks to
 
 - higoka
-- Parsnip
 - Scottstamp
+- Arachis
+- Speaqer
+- Parsnip
 - Billsonnn
