@@ -1,5 +1,5 @@
 # Chroma
-Chroma (Greek word χρώμα for colour) a furniture renderer for the Habbo SWF's
+Chroma (Greek word χρώμα for paint) a furniture renderer for the Habbo SWF's
 
 ## A massive thanks to
 
