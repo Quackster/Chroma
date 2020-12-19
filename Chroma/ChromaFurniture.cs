@@ -9,6 +9,7 @@ using System.Xml;
 using Chroma.Extensions;
 using System.Drawing;
 using Color = SixLabors.ImageSharp.Color;
+using System;
 
 namespace Chroma
 {
@@ -356,8 +357,21 @@ namespace Chroma
 
         public static Rgba32 HexToColor(string hexString)
         {
-            var drawingColor = System.Drawing.ColorTranslator.FromHtml("#" + hexString);
-            return Color.FromRgb(drawingColor.R, drawingColor.G, drawingColor.B);
+            if (hexString.ToLower() == "transparent")
+            {
+                return Color.Transparent;
+            }
+
+            try
+            {
+                var drawingColor = System.Drawing.ColorTranslator.FromHtml("#" + hexString);
+                return Color.FromRgb(drawingColor.R, drawingColor.G, drawingColor.B);
+            }
+            catch (Exception ex)
+            {
+            }
+
+            return Color.FromRgb(254, 254, 254);
         }
 
         public string GetFileName()
