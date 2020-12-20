@@ -37,6 +37,7 @@ namespace Chroma
         private bool RenderBackground;
         private string RenderCanvasColour;
         private bool CropImage;
+        public bool IsIcon;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -57,7 +58,7 @@ namespace Chroma
         public int MaxStates { get; private set; }
 
         public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false, bool renderBackground = false, string renderCanvasColour = "FEFEFE",
-            bool cropImage = true)
+            bool cropImage = true, bool renderIcon = false)
         {
             this.fileName = inputFileName;
             this.IsSmallFurni = isSmallFurni;
@@ -72,6 +73,7 @@ namespace Chroma
             this.RenderBackground = renderBackground;
             this.RenderCanvasColour = renderCanvasColour;
             this.CropImage = cropImage;
+            this.IsIcon = renderIcon;
         }
 
         public string Run()
@@ -122,11 +124,18 @@ namespace Chroma
 
                 string imageName = asset.Attributes.GetNamedItem("name").InnerText;
 
-                if (imageName.Contains("_icon_"))
-                    continue;
-
                 if (imageName.Contains(".props") || imageName.StartsWith("s_" + this.Sprite))
                     continue;
+
+                if (!IsIcon)
+                {
+                    if (imageName.Contains("_icon_"))
+                        continue;
+                } else
+                {
+                    if (!imageName.Contains("_icon_"))
+                        continue;
+                }
 
                 if (asset.Attributes.GetNamedItem("source") != null)
                 {

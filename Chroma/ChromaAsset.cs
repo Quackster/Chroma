@@ -46,8 +46,8 @@ namespace Chroma
 
                 IsSmall = (data[0] == "32");
                 Layer = (data[1].ToUpper().ToCharArray()[0] - 64) - 1;
-                Direction = int.Parse(data[2]);
-                Frame = int.Parse(data[3]);
+                Direction = chromaFurniture.IsIcon ? 0 : int.Parse(data[2]);
+                Frame = chromaFurniture.IsIcon ? 0 : int.Parse(data[3]);
 
                 var xmlData = FileUtil.SolveXmlFile(chromaFurniture.XmlDirectory, "visualization");
 

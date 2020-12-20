@@ -25,6 +25,7 @@ namespace ChromaWebApp.Controllers
             bool renderShadows = false;
             bool cropImage = true;
             string renderCanvasColour = "FEFEFE";
+            bool renderIcon = false;
 
             if (Request.Query.ContainsKey("sprite"))
             {
@@ -116,7 +117,7 @@ namespace ChromaWebApp.Controllers
 
             if (Request.Query.ContainsKey("shadow"))
             {
-                Request.Query.TryGetValue("bg", out var value);
+                Request.Query.TryGetValue("shadow", out var value);
                 renderShadows = (value.ToString().Equals("1") || value.ToString().Equals("true"));
             }
 
@@ -126,13 +127,20 @@ namespace ChromaWebApp.Controllers
                 renderCanvasColour = value.ToString();
             }
 
+
+            if (Request.Query.ContainsKey("icon"))
+            {
+                Request.Query.TryGetValue("icon", out var value);
+                renderIcon = (value.ToString().Equals("1") || value.ToString().Equals("true"));
+            }
+
             if (sprite != null && sprite.Length > 0)
             {
                 var furni = new ChromaFurniture("swfs/hof_furni/" + sprite + ".swf", 
                                 isSmallFurni: isSmallFurni, renderState: renderState, 
                                 renderDirection: renderDirection, colourId: color,
                                 renderShadows: renderShadows, renderBackground: renderBackground,
-                                renderCanvasColour: renderCanvasColour, cropImage: cropImage);
+                                renderCanvasColour: renderCanvasColour, cropImage: cropImage, renderIcon: renderIcon);
                 furni.Run();
 
                 return File(furni.CreateImage(), "image/png");
