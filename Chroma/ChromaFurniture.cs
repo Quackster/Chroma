@@ -54,7 +54,9 @@ namespace Chroma
             get { return Path.Combine("furni_export", Sprite, "xml"); }
         }
 
-        public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false, bool renderBackground = false, string renderCanvasColour = null,
+        public int MaxStates { get; private set; }
+
+        public ChromaFurniture(string inputFileName, bool isSmallFurni, int renderState, int renderDirection, int colourId = -1, bool renderShadows = false, bool renderBackground = false, string renderCanvasColour = "FEFEFE",
             bool cropImage = true)
         {
             this.fileName = inputFileName;
@@ -95,6 +97,11 @@ namespace Chroma
             return this.outputFileName;
         }
 
+        private int GetMaxFrames()
+        {
+            return Assets.Max(x => x.Frame);
+        }
+
         private void GenerateAssets(bool createFiles = true)
         {
             var xmlData = FileUtil.SolveXmlFile(XmlDirectory, "assets");
@@ -132,6 +139,35 @@ namespace Chroma
                     CreateAsset(chromaAsset, asset, createFiles);
                 }
             }
+
+            this.MaxStates = 0;
+
+            var visualization = FileUtil.SolveXmlFile(XmlDirectory, "visualization");
+
+            if (visualization == null)
+            {
+                return;
+            }
+
+            XmlNodeList animations = visualization.SelectNodes("//visualizationData/visualization[@size='" + (IsSmallFurni ? "32" : "64") + "']/animations/animation");
+
+            if (animations == null || animations.Count == 0)
+                animations = visualization.SelectNodes("//visualizationData/visualization[@size='" + (IsSmallFurni ? "32" : "64") + "']/directions/direction[@id='" + RenderDirection + "']/animations/animation");
+
+            for (int i = 0; i < animations.Count; i++)
+            {
+                var animation = animations.Item(i);
+
+                if (animation.Name != "animation" && animation.Attributes.GetNamedItem("id") == null)
+                    continue;
+
+                int state = int.Parse(animation.Attributes.GetNamedItem("id").InnerText);
+
+                if (state > MaxStates)
+                    MaxStates = state;
+            }
+
+            this.MaxStates = MaxStates;
         }
 
         private void CreateAsset(ChromaAsset chromaAsset, XmlNode node, bool createFiles)
@@ -165,6 +201,9 @@ namespace Chroma
 
         private List<ChromaAsset> CreateBuildQueue()
         {
+            if (RenderState > MaxStates)
+                RenderState = 0;
+
             var compulsoryFrames = new List<ChromaAsset>(Assets);
 
             compulsoryFrames = compulsoryFrames.Where(x => x.IsSmall == IsSmallFurni).ToList();
