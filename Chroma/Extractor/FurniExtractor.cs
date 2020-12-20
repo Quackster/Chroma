@@ -35,11 +35,6 @@ namespace Extractor
             var imageTags = flash.Tags.Where(t => t.Kind == TagKind.DefineBitsLossless2).Cast<DefineBitsLossless2Tag>();
             var dataTags = flash.Tags.Where(t => t.Kind == TagKind.DefineBinaryData).Cast<DefineBinaryDataTag>();
 
-            var furni = new Json.JsonFurniData();
-            furni.visualization = new Json.Visualizations();
-            furni.logic = new Json.Logic();
-            furni.assets = new Dictionary<string, Json.Asset>();
-
             foreach (var data in dataTags)
             {
                 var name = symbolClass.Names[symbolClass.Ids.IndexOf(data.Id)];
