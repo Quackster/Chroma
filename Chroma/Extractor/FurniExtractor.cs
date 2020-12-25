@@ -18,9 +18,6 @@ namespace Extractor
         {
             string fileName = Path.GetFileNameWithoutExtension(file);
 
-            //if (Directory.Exists(@"furni_export\" + fileName))
-            //    return false;
-
             var flash = new ShockwaveFlash(file);
             flash.Disassemble();
 

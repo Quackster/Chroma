@@ -1,7 +1,9 @@
 ﻿using Chroma;
-using ChromaWebApp;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ChromaWebApp.Controllers
 {
@@ -26,6 +28,7 @@ namespace ChromaWebApp.Controllers
             bool cropImage = true;
             string renderCanvasColour = "FEFEFE";
             bool renderIcon = false;
+
 
             if (Request.Query.ContainsKey("sprite"))
             {
@@ -60,6 +63,11 @@ namespace ChromaWebApp.Controllers
                 if (value.ToString().IsNumeric())
                 {
                     renderState = int.Parse(value.ToString());
+
+                    if (renderState >= 101)
+                    {
+                        renderState = 0;
+                    }
                 }
             }
 
@@ -90,6 +98,11 @@ namespace ChromaWebApp.Controllers
                 if (value.ToString().IsNumeric())
                 {
                     color = int.Parse(value.ToString());
+
+                    if (color >= 16)
+                    {
+                        color = 0;
+                    }
                 }
             }
 
@@ -100,6 +113,11 @@ namespace ChromaWebApp.Controllers
                 if (value.ToString().IsNumeric())
                 {
                     color = int.Parse(value.ToString());
+
+                    if (color >= 16)
+                    {
+                        color = 0;
+                    }
                 }
             }
 
@@ -136,17 +154,63 @@ namespace ChromaWebApp.Controllers
 
             if (sprite != null && sprite.Length > 0)
             {
-                var furni = new ChromaFurniture("swfs/hof_furni/" + sprite + ".swf", 
-                                isSmallFurni: isSmallFurni, renderState: renderState, 
-                                renderDirection: renderDirection, colourId: color,
-                                renderShadows: renderShadows, renderBackground: renderBackground,
-                                renderCanvasColour: renderCanvasColour, cropImage: cropImage, renderIcon: renderIcon);
-                furni.Run();
+                string fileNameUnique = string.Concat(sprite, isSmallFurni, renderState, renderDirection, color, renderShadows, renderBackground, renderCanvasColour, cropImage, renderIcon);
+                string hashedUniqueName = Hash(fileNameUnique);
 
-                return File(furni.CreateImage(), "image/png");
+                if (!System.IO.Directory.Exists("furni_export/" + sprite + "/export"))
+                {
+                    Directory.CreateDirectory("furni_export/" + sprite + "/export");
+                }
+
+                if (!System.IO.File.Exists("furni_export/" + sprite + "/export/" + hashedUniqueName + ".png"))
+                {
+                    if (sprite != null && sprite.Length > 0)
+                    {
+                        var furni = new ChromaFurniture("swfs/hof_furni/" + sprite + ".swf",
+                                        isSmallFurni: isSmallFurni, renderState: renderState,
+                                        renderDirection: renderDirection, colourId: color,
+                                        renderShadows: renderShadows, renderBackground: renderBackground,
+                                        renderCanvasColour: renderCanvasColour, cropImage: cropImage, renderIcon: renderIcon);
+                        furni.Run();
+                        var bytes = furni.CreateImage();
+
+                        if (bytes != null)
+                        {
+                            System.IO.File.WriteAllBytes("furni_export/" + sprite + "/export/" + hashedUniqueName + ".png", bytes);
+                        }
+                        else
+                        {
+                            System.IO.File.WriteAllBytes("furni_export/" + sprite + "/export/" + hashedUniqueName + ".png", new byte[0]);
+
+                        }
+
+                    }
+                }
+
+                if (System.IO.File.Exists("furni_export/" + sprite + "/export/" + hashedUniqueName + ".png"))
+                {
+                    return File(System.IO.File.ReadAllBytes("furni_export/" + sprite + "/export/" + hashedUniqueName + ".png"), "image/png");
+                }
             }
 
             return null;
+        }
+
+        static string Hash(string input)
+        {
+            using (SHA1Managed sha1 = new SHA1Managed())
+            {
+                var hash = sha1.ComputeHash(Encoding.UTF8.GetBytes(input));
+                var sb = new StringBuilder(hash.Length * 2);
+
+                foreach (byte b in hash)
+                {
+                    // can be "x2" if you want lowercase
+                    sb.Append(b.ToString("X2"));
+                }
+
+                return sb.ToString();
+            }
         }
     }
 }
