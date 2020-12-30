@@ -10,12 +10,7 @@ namespace ChromaApp
         {
             ChromaFurniture furni;
 
-            furni = new ChromaFurniture("tv_flat.swf", isSmallFurni: false, renderState: 0, renderDirection: 2);
-            furni.Run();
-
-            File.WriteAllBytes(furni.GetFileName(), furni.CreateImage());
-
-            furni = new ChromaFurniture("chair_silo.swf", isSmallFurni: false, renderState: 0, renderDirection: 2, colourId: 2);
+            furni = new ChromaFurniture(@"C:\Users\Alex\Documents\Habbo Furni\gamedata-2020-14-12\swf_furni\hc_tbl.swf", isSmallFurni: false, renderState: 1, renderDirection: 0, colourId: 2);
             furni.Run();
 
             File.WriteAllBytes(furni.GetFileName(), furni.CreateImage());

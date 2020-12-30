@@ -27,8 +27,8 @@ namespace Chroma
         public List<ChromaAsset> Assets;
         public Image<Rgba32> DrawingCanvas;
 
-        public int CANVAS_WIDTH = 500;
-        public int CANVAS_HEIGHT = 500;
+        public int CANVAS_WIDTH = 1200;
+        public int CANVAS_HEIGHT = 1200;
         public string CANVAS_PICTURE = "bg.png";
 
         public string FurniData;
@@ -284,6 +284,23 @@ namespace Chroma
             if (!this.RenderShadows)
             {
                 candidates = candidates.Where(x => !x.Shadow).ToList();
+            }
+
+            foreach (var asset in Assets)
+            {
+                if (candidates.Count(x => x.Layer == asset.Layer) == 0)
+                {
+                    var potential = Assets.Where(x => x.Layer == asset.Layer && x.Direction == RenderDirection && x.IsSmall == IsSmallFurni && !x.Shadow).ToList();
+
+                    if (potential.Count(x => x.Frame == RenderState) > 0 )
+                    {
+                        candidates.AddRange(potential.Where(x => x.Frame == RenderState).ToList());
+                    } 
+                    else
+                    {
+                        candidates.AddRange(potential);
+                    }
+                }
             }
 
             candidates = candidates.OrderBy(x => x.Z).ToList();
