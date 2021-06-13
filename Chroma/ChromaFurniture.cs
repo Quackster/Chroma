@@ -10,6 +10,7 @@ using Chroma.Extensions;
 using System.Drawing;
 using Color = SixLabors.ImageSharp.Color;
 using System;
+using Newtonsoft.Json;
 
 namespace Chroma
 {
@@ -38,6 +39,7 @@ namespace Chroma
         private string RenderCanvasColour;
         private bool CropImage;
         public bool IsIcon;
+        public SortedDictionary<int, ChromaAnimation> Animations;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -68,7 +70,7 @@ namespace Chroma
             this.ColourId = colourId;
             this.Sprite = Path.GetFileNameWithoutExtension(inputFileName);
             this.outputFileName = this.GetFileName();
-            this.FurniData = Path.Combine("furni_export/" +  Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
+            this.FurniData = Path.Combine("furni_export/" + Path.GetFileNameWithoutExtension(inputFileName) + "/furni.json");
             this.RenderShadows = renderShadows;
             this.RenderBackground = renderBackground;
             this.RenderCanvasColour = renderCanvasColour;
@@ -92,7 +94,11 @@ namespace Chroma
                 DrawingCanvas = new Image<Rgba32>(CANVAS_HEIGHT, CANVAS_WIDTH, HexToColor(this.RenderCanvasColour));
             }
 ;
+            GenerateAnimations();
             GenerateAssets();
+
+            var json = JsonConvert.SerializeObject(this.Animations);
+
             CreateBuildQueue();
 
             this.outputFileName = this.GetFileName();
@@ -131,7 +137,8 @@ namespace Chroma
                 {
                     if (imageName.Contains("_icon_"))
                         continue;
-                } else
+                }
+                else
                 {
                     if (!imageName.Contains("_icon_"))
                         continue;
@@ -202,7 +209,8 @@ namespace Chroma
             {
                 chromaAsset.Shadow = true;
                 chromaAsset.Z = int.MinValue;
-            } else
+            }
+            else
             {
                 chromaAsset.Z += chromaAsset.Layer;
             }
@@ -216,7 +224,7 @@ namespace Chroma
             var compulsoryFrames = new List<ChromaAsset>(Assets);
 
             compulsoryFrames = compulsoryFrames.Where(x => x.IsSmall == IsSmallFurni).ToList();
-            compulsoryFrames = compulsoryFrames.Where(x => x.Frame == 0).ToList();
+            compulsoryFrames = compulsoryFrames.Where(x => x.Frame == this.RenderState).ToList();
 
             var candidates = new List<ChromaAsset>(Assets);
             candidates = candidates.Where(x => x.IsSmall == IsSmallFurni).ToList();
@@ -259,6 +267,7 @@ namespace Chroma
                 candidates = candidates.Where(x => x.Frame == 0).ToList();
             }
 
+       
             // Select the missing frames ordered by direction
             if (compulsoryFrames.Count > 0)
             {
@@ -292,10 +301,10 @@ namespace Chroma
                 {
                     var potential = Assets.Where(x => x.Layer == asset.Layer && x.Direction == RenderDirection && x.IsSmall == IsSmallFurni && !x.Shadow).ToList();
 
-                    if (potential.Count(x => x.Frame == RenderState) > 0 )
+                    if (potential.Count(x => x.Frame == RenderState) > 0)
                     {
                         candidates.AddRange(potential.Where(x => x.Frame == RenderState).ToList());
-                    } 
+                    }
                     else
                     {
                         candidates.AddRange(potential);
@@ -304,6 +313,17 @@ namespace Chroma
             }
 
             candidates = candidates.OrderBy(x => x.Z).ToList();
+
+            /*foreach (var t in candidates)
+            {
+                Console.WriteLine(Path.Combine(this.OutputDirectory, t.imageName));
+                try
+                {
+                    File.Copy(Path.Combine(this.OutputDirectory, t.imageName + ".png"), t.imageName + ".png");
+                }
+                catch { }
+            }*/
+
             return candidates;
         }
 
@@ -316,7 +336,7 @@ namespace Chroma
 
             var cropColours = new List<Rgba32>();
 
-            if (this.CropImage) 
+            if (this.CropImage)
             {
                 if (this.RenderBackground)
                 {
@@ -449,6 +469,98 @@ namespace Chroma
             }
 
             return name + ".png";
+        }
+
+        private void GenerateAnimations()
+        {
+            char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToLower().ToCharArray();
+            var xmlData = FileUtil.SolveXmlFile(XmlDirectory, "visualization");
+
+            var animationCount = 0;
+            this.Animations = new SortedDictionary<int, ChromaAnimation>();
+
+            if (xmlData == null)
+            {
+                return;
+            }
+
+            XmlNodeList frames = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (IsSmallFurni ? "32" : "64") + "']/animations/animation/animationLayer/frameSequence/frame");
+            
+            if (frames == null)
+            {
+                frames = xmlData.SelectNodes("//visualizationData/visualization[@size='64']/animations/animation/animationLayer/frameSequence/frame");
+            }
+
+            int highestAnimationLayer = 0;
+
+            for (int i = 0; i < frames.Count; i++)
+            {
+                var frame = frames.Item(i);
+
+                var animationLayer = frame.ParentNode.ParentNode;
+                int letterPosition = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText);
+
+                if (letterPosition < 0 || letterPosition > alphabet.Length)
+                {
+                    continue;
+                }
+
+                var animationLetter = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText);//Convert.ToString(alphabet[int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText)]);
+
+                highestAnimationLayer = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText) + 1;
+
+                var animation = frame.ParentNode.ParentNode.ParentNode;
+                var animationId = int.Parse(animation.Attributes.GetNamedItem("id").InnerText);
+
+                var castAnimationId = animationId + 1;
+
+                if (castAnimationId > animationCount)
+                {
+                    animationCount = castAnimationId;
+                }
+
+                if (!this.Animations.ContainsKey(animationLetter))
+                {
+                    this.Animations.Add(animationLetter, new ChromaAnimation());//new Dictionary<int, List<string>>());
+                }
+
+                if (!this.Animations[animationLetter].States.ContainsKey(animationId))
+                {
+                    var frameClass = new ChromaFrame();
+                    this.Animations[animationLetter].States.Add(animationId, frameClass);
+
+                    if (animationLayer.Attributes.GetNamedItem("loopCount") != null)
+                        frameClass.Loop = int.Parse(animationLayer.Attributes.GetNamedItem("loopCount").InnerText);
+
+                    if (animationLayer.Attributes.GetNamedItem("frameRepeat") != null)
+                        frameClass.FramesPerSecond = int.Parse(animationLayer.Attributes.GetNamedItem("frameRepeat").InnerText);
+                }
+
+                this.Animations[animationLetter].States[animationId].Frames.Add(frame.Attributes.GetNamedItem("id").InnerText);
+            }
+
+            for (int i = 0; i < highestAnimationLayer; i++)
+            {
+                //var letter = alphabet[i];
+                //string letter = Convert.ToString(alphabet[i]);
+
+                if (!this.Animations.ContainsKey(i))
+                {
+                    var animation = new ChromaAnimation();
+                    this.Animations.Add(i, animation);
+
+                    for (int j = 0; j < animationCount; j++)
+                    {
+                        if (!animation.States.ContainsKey(j))
+                        {
+                            var frame = new ChromaFrame();
+                            frame.Frames.Add("0");
+
+                            animation.States.Add(j, frame);
+                        }
+                    }
+                }
+            }
         }
     }
 }

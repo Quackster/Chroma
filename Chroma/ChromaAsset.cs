@@ -2,6 +2,8 @@
 using System.Drawing;
 using System.IO;
 using System.Xml;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace Chroma
 {
@@ -51,16 +53,16 @@ namespace Chroma
 
                 var xmlData = FileUtil.SolveXmlFile(chromaFurniture.XmlDirectory, "visualization");
 
-                XmlNodeList layers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/layers/layer");
+                XmlNodeList visualisationLayers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/layers/layer");
 
-                if (layers == null || layers.Count == 0)
+                if (visualisationLayers == null || visualisationLayers.Count == 0)
                 {
-                    layers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/directions/direction[@id='" + chromaFurniture.RenderDirection + "']/layer");
+                    visualisationLayers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/directions/direction[@id='" + chromaFurniture.RenderDirection + "']/layer");
                 }
 
-                for (int i = 0; i < layers.Count; i++)
+                for (int i = 0; i < visualisationLayers.Count; i++)
                 {
-                    var layer = layers.Item(i);
+                    var layer = visualisationLayers.Item(i);
                     var animationLayer = int.Parse(layer.Attributes.GetNamedItem("id").InnerText);
 
                     if (animationLayer == this.Layer)
@@ -97,9 +99,23 @@ namespace Chroma
                         ColourCode = colorLayers.Item(0).Attributes.GetNamedItem("color").InnerText;
                     }
                 }
+
+                //XmlNodeList animationLayers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/animations/animation[@id='" + chromaFurniture.RenderState + "']/animationLayer[@id='" + Layer + "']/frameSequence/frame");
+                Console.WriteLine(this.Layer);
+                if (chromaFurniture.Animations.ContainsKey(Layer) && 
+                    chromaFurniture.Animations[Layer].States.Count > 0 && 
+                    chromaFurniture.Animations[Layer].States.ContainsKey(chromaFurniture.RenderState)) 
+                {
+                    var json = JsonConvert.SerializeObject(chromaFurniture.Animations[Layer].States[chromaFurniture.RenderState]);
+                    Frame = int.Parse(chromaFurniture.Animations[Layer].States[chromaFurniture.RenderState].Frames[0]);
+                } else
+                {
+                    Frame = 0;
+                }
             }
-            catch (FormatException)
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
 
