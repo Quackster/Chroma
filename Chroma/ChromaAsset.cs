@@ -100,18 +100,13 @@ namespace Chroma
                     }
                 }
 
-                //XmlNodeList animationLayers = xmlData.SelectNodes("//visualizationData/visualization[@size='" + (chromaFurniture.IsSmallFurni ? "32" : "64") + "']/animations/animation[@id='" + chromaFurniture.RenderState + "']/animationLayer[@id='" + Layer + "']/frameSequence/frame");
-                Console.WriteLine(this.Layer);
-                if (chromaFurniture.Animations.ContainsKey(Layer) && 
+                /*if (chromaFurniture.Animations.ContainsKey(Layer) && 
                     chromaFurniture.Animations[Layer].States.Count > 0 && 
                     chromaFurniture.Animations[Layer].States.ContainsKey(chromaFurniture.RenderState)) 
                 {
                     var json = JsonConvert.SerializeObject(chromaFurniture.Animations[Layer].States[chromaFurniture.RenderState]);
                     Frame = int.Parse(chromaFurniture.Animations[Layer].States[chromaFurniture.RenderState].Frames[0]);
-                } else
-                {
-                    Frame = 0;
-                }
+                }*/
             }
             catch (Exception e)
             {

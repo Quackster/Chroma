@@ -39,7 +39,9 @@ namespace Chroma
         private string RenderCanvasColour;
         private bool CropImage;
         public bool IsIcon;
+
         public SortedDictionary<int, ChromaAnimation> Animations;
+        public int HighestAnimationLayer;
 
         //public List<ChromaAsset> BuildQueue;
 
@@ -221,10 +223,63 @@ namespace Chroma
             if (RenderState > MaxStates)
                 RenderState = 0;
 
-            var compulsoryFrames = new List<ChromaAsset>(Assets);
+            var candidates = new List<ChromaAsset>(Assets).Where(x => x.IsSmall == IsSmallFurni).ToList();
+            var validDirections = candidates.Where(x => x.Direction == RenderDirection).ToList();
+
+            if (validDirections.Count == 0)
+            {
+                RenderDirection = 0;
+                validDirections = candidates.Where(x => x.Direction == RenderDirection).ToList();
+            }
+
+            if (validDirections.Count == 0)
+            {
+                RenderDirection = 2;
+                validDirections = candidates.Where(x => x.Direction == RenderDirection).ToList();
+            }
+
+            if (validDirections.Count == 0)
+            {
+                RenderDirection = 4;
+                validDirections = candidates.Where(x => x.Direction == RenderDirection).ToList();
+            }
+
+            if (validDirections.Count == 0)
+            {
+                RenderDirection = 6;
+                validDirections = candidates.Where(x => x.Direction == RenderDirection).ToList();
+            }
+
+            candidates = validDirections;
+
+            var renderFrames = new List<ChromaAsset>();
+
+            for (int Layer = 0; Layer < this.HighestAnimationLayer; Layer++)
+            {
+                //var frames = candidates.Where(x => x.IsSmall == IsSmallFurni).ToList();
+                //candidates = candidates.Where(x => x.IsSmall == IsSmallFurni).ToList();
+                var Frame = 0;
+
+                if (Animations.ContainsKey(Layer) &&
+                    Animations[Layer].States.Count > 0 &&
+                    Animations[Layer].States.ContainsKey(RenderState))
+                {
+                    var json = JsonConvert.SerializeObject(Animations[Layer].States[RenderState]);
+                    Frame = int.Parse(Animations[Layer].States[RenderState].Frames[0]);
+                }
+
+                renderFrames.AddRange(candidates.Where(x => x.Layer == Layer && x.Frame == Frame).ToList());
+            }
+
+            if (!this.RenderShadows)
+            {
+                renderFrames = renderFrames.Where(x => !x.Shadow).ToList();
+            }
+
+            /*var compulsoryFrames = new List<ChromaAsset>(Assets);
 
             compulsoryFrames = compulsoryFrames.Where(x => x.IsSmall == IsSmallFurni).ToList();
-            compulsoryFrames = compulsoryFrames.Where(x => x.Frame == this.RenderState).ToList();
+            compulsoryFrames = compulsoryFrames.Where(x => x.Frame == 0).ToList();
 
             var candidates = new List<ChromaAsset>(Assets);
             candidates = candidates.Where(x => x.IsSmall == IsSmallFurni).ToList();
@@ -314,17 +369,12 @@ namespace Chroma
 
             candidates = candidates.OrderBy(x => x.Z).ToList();
 
-            /*foreach (var t in candidates)
-            {
-                Console.WriteLine(Path.Combine(this.OutputDirectory, t.imageName));
-                try
-                {
-                    File.Copy(Path.Combine(this.OutputDirectory, t.imageName + ".png"), t.imageName + ".png");
-                }
-                catch { }
-            }*/
-
             return candidates;
+            */
+
+
+            renderFrames = renderFrames.OrderBy(x => x.Z).ToList();
+            return renderFrames;
         }
 
         public byte[] CreateImage()
@@ -491,7 +541,7 @@ namespace Chroma
                 frames = xmlData.SelectNodes("//visualizationData/visualization[@size='64']/animations/animation/animationLayer/frameSequence/frame");
             }
 
-            int highestAnimationLayer = 0;
+            this.HighestAnimationLayer = 0;
 
             for (int i = 0; i < frames.Count; i++)
             {
@@ -507,7 +557,7 @@ namespace Chroma
 
                 var animationLetter = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText);//Convert.ToString(alphabet[int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText)]);
 
-                highestAnimationLayer = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText) + 1;
+                HighestAnimationLayer = int.Parse(animationLayer.Attributes.GetNamedItem("id").InnerText) + 1;
 
                 var animation = frame.ParentNode.ParentNode.ParentNode;
                 var animationId = int.Parse(animation.Attributes.GetNamedItem("id").InnerText);
@@ -539,7 +589,7 @@ namespace Chroma
                 this.Animations[animationLetter].States[animationId].Frames.Add(frame.Attributes.GetNamedItem("id").InnerText);
             }
 
-            for (int i = 0; i < highestAnimationLayer; i++)
+            for (int i = 0; i < HighestAnimationLayer; i++)
             {
                 //var letter = alphabet[i];
                 //string letter = Convert.ToString(alphabet[i]);
