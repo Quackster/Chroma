@@ -39,7 +39,7 @@ namespace Chroma
         private string RenderCanvasColour;
         private bool CropImage;
         public bool IsIcon;
-
+        private int AnimationCount;
         public SortedDictionary<int, ChromaAnimation> Animations;
         public int HighestAnimationLayer;
 
@@ -186,6 +186,30 @@ namespace Chroma
             }
 
             this.MaxStates = MaxStates;
+            this.HighestAnimationLayer = this.Assets.Where(x => !x.Shadow).ToList().Max(x => x.Layer) + 1;
+
+            for (int i = 0; i < HighestAnimationLayer; i++)
+            {
+                //var letter = alphabet[i];
+                //string letter = Convert.ToString(alphabet[i]);
+
+                if (!this.Animations.ContainsKey(i))
+                {
+                    var animation = new ChromaAnimation();
+                    this.Animations.Add(i, animation);
+
+                    for (int j = 0; j < this.AnimationCount; j++)
+                    {
+                        if (!animation.States.ContainsKey(j))
+                        {
+                            var frame = new ChromaFrame();
+                            frame.Frames.Add("0");
+
+                            animation.States.Add(j, frame);
+                        }
+                    }
+                }
+            }
         }
 
         private void CreateAsset(ChromaAsset chromaAsset, XmlNode node, bool createFiles)
@@ -526,7 +550,7 @@ namespace Chroma
             char[] alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToLower().ToCharArray();
             var xmlData = FileUtil.SolveXmlFile(XmlDirectory, "visualization");
 
-            var animationCount = 0;
+            this.AnimationCount = 0;
             this.Animations = new SortedDictionary<int, ChromaAnimation>();
 
             if (xmlData == null)
@@ -564,9 +588,9 @@ namespace Chroma
 
                 var castAnimationId = animationId + 1;
 
-                if (castAnimationId > animationCount)
+                if (castAnimationId > this.AnimationCount)
                 {
-                    animationCount = castAnimationId;
+                    this.AnimationCount = castAnimationId;
                 }
 
                 if (!this.Animations.ContainsKey(animationLetter))
@@ -587,29 +611,6 @@ namespace Chroma
                 }
 
                 this.Animations[animationLetter].States[animationId].Frames.Add(frame.Attributes.GetNamedItem("id").InnerText);
-            }
-
-            for (int i = 0; i < HighestAnimationLayer; i++)
-            {
-                //var letter = alphabet[i];
-                //string letter = Convert.ToString(alphabet[i]);
-
-                if (!this.Animations.ContainsKey(i))
-                {
-                    var animation = new ChromaAnimation();
-                    this.Animations.Add(i, animation);
-
-                    for (int j = 0; j < animationCount; j++)
-                    {
-                        if (!animation.States.ContainsKey(j))
-                        {
-                            var frame = new ChromaFrame();
-                            frame.Frames.Add("0");
-
-                            animation.States.Add(j, frame);
-                        }
-                    }
-                }
             }
         }
     }
