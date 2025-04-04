@@ -11,6 +11,41 @@ Put the swfs in the folder /swfs/hof_furni/ where the app is located, for exampl
   - ChromaWebApp.exe
   - swfs/hof_furni/
     - rare_dragonlamp.swf
+   
+## Download
+
+The latest builds for Linux and Windows are found on the [latest](https://github.com/Quackster/Chroma/releases/tag/latest) tag.
+
+| OS | Download |
+|---|---|
+| Linux (64-bit) | [Chroma-linux-x64.zip](https://github.com/Quackster/Chroma/releases/download/latest/Chroma-linux-x64.zip) |
+| Windows (64-bit) | [Chroma-win-x64.zip](https://github.com/Quackster/Chroma/releases/download/latest/Chroma-win-x64.zip) |
+
+## Setup
+
+To run Chroma, you need to install .NET 8 [runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for your operating system.
+
+Once downloaded, you may execute ``./ChromaWebApp`` (Linux) or ``ChromaWebApp.exe`` (Windows).
+Once that's done, you should see the following console output.
+
+```
+Loading flash assets...
+9762 flash assets loaded
+Loading figure data...
+301 figure sets loaded
+11 figure set types loaded
+3 figure palettes loaded
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5000
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: https://localhost:5001
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path...
+```
 
 Run the app.
 
