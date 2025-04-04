@@ -23,7 +23,7 @@ The latest builds for Linux and Windows are found on the [latest](https://github
 
 ## Setup
 
-To run Minerva, you need to install .NET 8 [runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for your operating system.
+To run Chroma, you need to install .NET 8 [runtime](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for your operating system.
 
 Once downloaded, you may execute ``./ChromaWebApp`` (Linux) or ``ChromaWebApp.exe`` (Windows).
 Once that's done, you should see the following console output.
