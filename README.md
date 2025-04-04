@@ -29,22 +29,16 @@ Once downloaded, you may execute ``./ChromaWebApp`` (Linux) or ``ChromaWebApp.ex
 Once that's done, you should see the following console output.
 
 ```
-Loading flash assets...
-9762 flash assets loaded
-Loading figure data...
-301 figure sets loaded
-11 figure set types loaded
-3 figure palettes loaded
-info: Microsoft.Hosting.Lifetime[14]
+info: Microsoft.Hosting.Lifetime[0]
       Now listening on: http://localhost:5000
-info: Microsoft.Hosting.Lifetime[14]
+info: Microsoft.Hosting.Lifetime[0]
       Now listening on: https://localhost:5001
 info: Microsoft.Hosting.Lifetime[0]
       Application started. Press Ctrl+C to shut down.
 info: Microsoft.Hosting.Lifetime[0]
       Hosting environment: Production
 info: Microsoft.Hosting.Lifetime[0]
-      Content root path...
+      Content root path: [your working directory]
 ```
 
 Run the app.
