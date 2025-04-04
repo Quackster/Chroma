@@ -26,7 +26,7 @@ namespace ChromaWebApp.Controllers
             bool renderBackground = false;
             bool renderShadows = false;
             bool cropImage = true;
-            string renderCanvasColour = "FEFEFE";
+            string renderCanvasColour = "transparent"; //"FEFEFE";
             bool renderIcon = false;
 
 
