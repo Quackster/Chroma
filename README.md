@@ -57,6 +57,14 @@ Run the app.
 
 ``ChromaWebApp.exe --urls=http://*:8090/``
 
+After adding a SWF file to the /swf/hof_furni folder as shown above, lets say "rare_parasol.swf", then heading over to this link
+
+https://localhost:5001/?sprite=rare_parasol&color=0&direction=4&small=false&state=1
+
+Should display:
+
+![image](https://github.com/user-attachments/assets/58659492-900b-462b-8cc2-56ddbf42a81f)
+
 Then proxy it through PHP.
 
 ```php
