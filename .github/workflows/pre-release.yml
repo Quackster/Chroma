@@ -33,7 +33,7 @@ jobs:
 
       - name: File release preparation
         run: |
-          sudo cp bg.png win-x64
+          sudo cp bg.png linux-x64
         
       - name: Compress release files
         uses: montudor/action-zip@v1
