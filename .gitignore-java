@@ -1,0 +1,34 @@
+# Java build artifacts
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+
+# Logs
+*.log
+
+# Furni exports
+furni_export/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application specific
+swfs/
